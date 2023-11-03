@@ -1,13 +1,19 @@
+use std::fs;
+use std::fs::File;
+use std::io::Write;
 use tokio::time::{sleep, Duration};
 use reqwest::header::HeaderMap;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
+use serde_json::Value;
 
 pub struct LSGCClient {
     pulls_this_second: i32,
     pulls_last_two_minutes: i32,
     client: reqwest::Client,
-    header: HeaderMap
+    header: HeaderMap,
+    games_list: Vec<std::string::String>,
+    player_list: Vec<std::string::String>
 }
 
 impl LSGCClient {
@@ -37,6 +43,8 @@ impl LSGCClient {
             pulls_last_two_minutes: 0,
             client: reqwest::Client::new(),
             header: hm,
+            games_list: vec![],
+            player_list: vec![],
         };
         return out;
     }
@@ -71,5 +79,83 @@ impl LSGCClient {
         }
 
         Ok(response.text().await?)
+    }
+
+    pub async fn get_featured_games_players(&mut self) -> Result<(), reqwest::Error> {
+        let a = self.request("https://euw1.api.riotgames.com/lol/spectator/v4/featured-games".to_string())
+            .await
+            .expect("error while requesting");
+        let parsed: Value = serde_json::from_str(&*a).unwrap();
+        if let Some(games) = parsed["gameList"].as_array() {
+            for game in games {
+                if let Some(players) = game["participants"].as_array() {
+                    for player in players {
+                        self.player_list.push(player["puuid"].to_string().trim_matches('\"').parse().unwrap());
+                    }
+                }
+            }
+        }
+        println!("{:?}", self.player_list);
+        Ok(())
+    }
+
+    pub async fn get_games_from_players(&mut self) -> Result<(), reqwest::Error> {
+        let uris: Vec<String> = self.player_list.iter()
+            .map(|player| {
+                let name = player.to_string().trim_matches('\"').to_string();
+                format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?start=0&count=5", name)
+            })
+            .collect();
+
+        // Now that you've collected the necessary data, you can make the requests
+        for uri in uris {
+            let a = self.request(uri.parse().unwrap())
+                .await
+                .expect("error while requesting");
+            let parsed: Value = serde_json::from_str(&*a).unwrap();
+            if let Some(games) = parsed.as_array() {
+                for game in games {
+                    self.games_list.push(game.to_string());
+                }
+
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn write_games_to_disk_and_extract_new_players(&mut self) -> Result<(), reqwest::Error> {
+        let games_list_temp: Vec<String> = self.games_list.iter()
+            .map(|player| {
+                let name = player.to_string().trim_matches('\"').to_string();
+                format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?start=0&count=5", name)
+            })
+            .collect();
+
+
+        for game in games_list_temp {
+            if fs::metadata(game.to_string().trim_matches('\"').to_owned() + ".json").is_err() {
+                let uri = format!("{}", game.to_string().trim_matches('\"'));
+                println!("Requesting {}", uri);
+                let a = self.request(uri.parse().unwrap())
+                    .await
+                    .expect("Error");
+                let parsed: Value = serde_json::from_str(&*a).unwrap();
+                let mut file = File::create(parsed["metadata"]["matchId"].to_string().trim_matches('\"').to_owned() + ".json").expect("Error while filewrite!");
+                let fjson = serde_json::to_string_pretty(&parsed).expect("Fehler beim Formatieren des JSON");
+                file.write_all(fjson.as_bytes()).expect("Error while writing json to file!");
+                if let Some(players) = parsed["metadata"]["participants"].as_array() {
+                    for player in players {
+                        self.player_list.push(player["puuid"].clone().to_string());
+                    }
+                }
+            } else {
+                println!("Game already exists!");
+            }
+
+        }
+        self.games_list.clear();
+        self.player_list.dedup();
+        Ok(())
     }
 }
