@@ -126,16 +126,17 @@ impl LSGCClient {
 
     pub async fn write_games_to_disk_and_extract_new_players(&mut self) -> Result<(), reqwest::Error> {
         let games_list_temp: Vec<String> = self.games_list.iter()
-            .map(|player| {
-                let name = player.to_string().trim_matches('\"').to_string();
-                format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?start=0&count=5", name)
+            .map(|game| {
+                let id = game.to_string().trim_matches('\"').to_string();
+                format!("{}", id)
             })
             .collect();
 
+        println!("{:?}", games_list_temp);
 
         for game in games_list_temp {
             if fs::metadata(game.to_string().trim_matches('\"').to_owned() + ".json").is_err() {
-                let uri = format!("{}", game.to_string().trim_matches('\"'));
+                let uri = format!("https://europe.api.riotgames.com/lol/match/v5/matches/{}", game.to_string().trim_matches('\"'));
                 println!("Requesting {}", uri);
                 let a = self.request(uri.parse().unwrap())
                     .await
