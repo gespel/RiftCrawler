@@ -74,7 +74,7 @@ impl LSGCClient {
         } else {
             println!("Request failed with status code: {}", response.status());
             if response.status() == 429 {
-                self.sleep_with_status();
+                self.sleep_with_status().await;
             }
         }
 
@@ -95,7 +95,6 @@ impl LSGCClient {
                 }
             }
         }
-        println!("{:?}", self.player_list);
         Ok(())
     }
 
@@ -103,7 +102,7 @@ impl LSGCClient {
         let uris: Vec<String> = self.player_list.iter()
             .map(|player| {
                 let name = player.to_string().trim_matches('\"').to_string();
-                format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?start=0&count=5", name)
+                format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?start=1&count=1", name)
             })
             .collect();
 
@@ -132,8 +131,6 @@ impl LSGCClient {
             })
             .collect();
 
-        println!("{:?}", games_list_temp);
-
         for game in games_list_temp {
             if fs::metadata(game.to_string().trim_matches('\"').to_owned() + ".json").is_err() {
                 let uri = format!("https://europe.api.riotgames.com/lol/match/v5/matches/{}", game.to_string().trim_matches('\"'));
@@ -156,6 +153,7 @@ impl LSGCClient {
 
         }
         self.games_list.clear();
+        self.player_list.sort();
         self.player_list.dedup();
         Ok(())
     }
