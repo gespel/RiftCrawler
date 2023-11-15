@@ -11,7 +11,7 @@ mod lsgcclient;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     env_logger::init();
-    let mut l = LSGCClient::new("RGAPI-b99cf43d-d54a-440d-ae3d-b2d911d2c32c".parse().unwrap());
+    let mut l = LSGCClient::new("RGAPI-414e3e19-3cb5-402f-a7ff-56bea7e62375".parse().unwrap());
     info!("Starting initial Playerfetch");
 
     l.get_featured_games_players().await.expect("TODO: panic message");
@@ -19,7 +19,7 @@ async fn main() -> Result<(), Error> {
     info!("Starting initial Gamefetch");
 
 
-    l.get_games_from_players().await.expect("TODO: panic message");
+    l.get_games_from_players(2).await.expect("TODO: panic message");
 
     loop {
         info!("New Epoch!");
@@ -27,7 +27,7 @@ async fn main() -> Result<(), Error> {
         l.write_games_to_disk_and_extract_new_players().await.expect("TODO: panic message");
 
         info!("Fetching games from players...");
-        l.get_games_from_players().await.expect("TODO: panic message");
+        l.get_games_from_players(2).await.expect("TODO: panic message");
     }
 
 

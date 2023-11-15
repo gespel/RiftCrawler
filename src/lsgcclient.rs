@@ -7,6 +7,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use log::{debug, info, warn};
 use reqwest::Client;
 use serde_json::Value;
+use rand::Rng;
 
 pub struct LSGCClient {
     pulls_this_second: i32,
@@ -99,20 +100,30 @@ impl LSGCClient {
         Ok(())
     }
 
-    pub async fn get_games_from_players(&mut self) -> Result<(), reqwest::Error> {
-        let uris: Vec<String> = self.player_list.iter()
+    pub async fn get_games_from_players(&mut self, player_number: usize) -> Result<(), reqwest::Error> {
+        let mut player_selection: Vec<String> = Vec::new();
+        let mut rng = rand::thread_rng();
+        for i in 0..player_number {
+            let item = self.player_list.remove(
+                rng.gen_range(
+                    0..self.player_list.len()
+                )
+            );
+            player_selection.push(item);
+        }
+        self.player_list.clear();
+        let uris: Vec<String> = player_selection.iter()
             .map(|player| {
-                let name = player.to_string().trim_matches('\"').to_string();
+                let name = player.trim_matches('\"');
                 format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?start=1&count=1", name)
             })
             .collect();
 
-        // Now that you've collected the necessary data, you can make the requests
         for uri in uris {
-            let a = self.request(uri.parse().unwrap())
+            let answer_json = self.request(uri.parse().unwrap())
                 .await
                 .expect("error while requesting");
-            let parsed: Value = serde_json::from_str(&*a).unwrap();
+            let parsed: Value = serde_json::from_str(&*answer_json).unwrap();
             if let Some(games) = parsed.as_array() {
                 for game in games {
                     self.games_list.push(game.to_string());
@@ -126,14 +137,6 @@ impl LSGCClient {
 
     pub async fn write_games_to_disk_and_extract_new_players(&mut self) -> Result<(), reqwest::Error> {
         let games_list_temp: Vec<String> = self.games_list.clone();
-        /*
-        let games_list_temp: Vec<String> = self.games_list.iter()
-            .map(|game| {
-                let id = game.to_string().trim_matches('\"').to_string();
-                format!("{}", id)
-            })
-            .collect();*/
-
         for game in games_list_temp {
             if fs::metadata(game.to_string().trim_matches('\"').to_owned() + ".json").is_err() {
                 let uri = format!("https://europe.api.riotgames.com/lol/match/v5/matches/{}", game.to_string().trim_matches('\"'));
@@ -142,16 +145,24 @@ impl LSGCClient {
                     .await
                     .expect("Error");
                 let parsed: Value = serde_json::from_str(&*a).unwrap();
+
+                let mut add_counter: usize = 0;
+
+                if let Some(players) = parsed["metadata"]["participants"].as_array() {
+                    for player in players {
+                        debug!("New Player added! {}", player);
+                        self.player_list.push(player.clone().to_string());
+                        add_counter += 1;
+                    }
+                }
+                info!("Added {} new players...", add_counter);
                 if parsed["info"]["gameMode"] == "CLASSIC" {
+
+
                     let mut file = File::create(parsed["metadata"]["matchId"].to_string().trim_matches('\"').to_owned() + ".json").expect("Error while filewrite!");
                     let fjson = serde_json::to_string_pretty(&parsed).expect("Fehler beim Formatieren des JSON");
                     file.write_all(fjson.as_bytes()).expect("Error while writing json to file!");
                     info!("{} Game written!", parsed["metadata"]["matchId"]);
-                    if let Some(players) = parsed["metadata"]["participants"].as_array() {
-                        for player in players {
-                            self.player_list.push(player["puuid"].clone().to_string());
-                        }
-                    }
                 }
                 else {
                     debug!("Game is not classic...")
