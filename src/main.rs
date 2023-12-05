@@ -4,14 +4,21 @@ use serde_json::{Error, Value};
 use log::{error, info};
 use crate::lsgcclient::LSGCClient;
 mod lsgcclient;
+mod tools;
 
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     env_logger::init();
+
+    info!("Setting up file structure now...");
+    tools::setup_folder("games".to_string());
+    tools::setup_folder("games/classic".to_string());
+    tools::setup_folder("games/aram".to_string());
+    info!("File structure done!");
+
     let mut l = LSGCClient::new("RGAPI-414e3e19-3cb5-402f-a7ff-56bea7e62375".parse().unwrap());
     info!("Starting initial Playerfetch");
-
     l.get_featured_games_players().await.expect("TODO: panic message");
 
     info!("Starting initial Gamefetch");

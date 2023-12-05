@@ -8,6 +8,7 @@ use log::{debug, info, warn};
 use reqwest::Client;
 use serde_json::Value;
 use rand::Rng;
+use crate::tools;
 
 pub struct LSGCClient {
     pulls_this_second: i32,
@@ -157,12 +158,10 @@ impl LSGCClient {
                 }
                 info!("Added {} new players...", add_counter);
                 if parsed["info"]["gameMode"] == "CLASSIC" {
-
-
-                    let mut file = File::create(parsed["metadata"]["matchId"].to_string().trim_matches('\"').to_owned() + ".json").expect("Error while filewrite!");
-                    let fjson = serde_json::to_string_pretty(&parsed).expect("Fehler beim Formatieren des JSON");
-                    file.write_all(fjson.as_bytes()).expect("Error while writing json to file!");
-                    info!("{} Game written!", parsed["metadata"]["matchId"]);
+                    tools::write_game_json_to_disk(parsed, tools::GameType::CLASSIC);
+                }
+                else if parsed["info"]["gameMode"] == "ARAM" {
+                    tools::write_game_json_to_disk(parsed, tools::GameType::ARAM);
                 }
                 else {
                     debug!("Game is not classic...")
