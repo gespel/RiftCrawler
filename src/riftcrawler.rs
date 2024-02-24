@@ -10,16 +10,16 @@ use serde_json::Value;
 use rand::Rng;
 use crate::tools;
 
-pub struct LSGCClient {
+pub struct RiftCrawler {
     pulls_this_second: i32,
     pulls_last_two_minutes: i32,
     client: reqwest::Client,
     header: HeaderMap,
-    games_list: Vec<std::string::String>,
+    pub games_list: Vec<std::string::String>,
     player_list: Vec<std::string::String>
 }
 
-impl LSGCClient {
+impl RiftCrawler {
     async fn sleep_with_status(&self) {
         let progress = ProgressBar::new(120);
         progress.set_style(
@@ -33,7 +33,7 @@ impl LSGCClient {
         }
         progress.finish();
     }
-    pub fn new(api_key: String) -> LSGCClient {
+    pub fn new(api_key: String) -> RiftCrawler {
         let mut hm = HeaderMap::new();
         hm.insert("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36".parse().unwrap());
         hm.insert("Accept-Language", "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7".parse().unwrap());
@@ -41,7 +41,7 @@ impl LSGCClient {
         hm.insert("Origin", "http://sten-heimbrodt.de/lolstats".parse().unwrap());
         hm.insert("X-Riot-Token", api_key.parse().unwrap());
 
-        let out = LSGCClient {
+        let out = RiftCrawler {
             pulls_this_second: 0,
             pulls_last_two_minutes: 0,
             client: reqwest::Client::new(),
@@ -89,6 +89,7 @@ impl LSGCClient {
             .await
             .expect("error while requesting");
         let parsed: Value = serde_json::from_str(&*a).unwrap();
+        println!("{}", a);
         if let Some(games) = parsed["gameList"].as_array() {
             for game in games {
                 if let Some(players) = game["participants"].as_array() {
@@ -101,16 +102,23 @@ impl LSGCClient {
         Ok(())
     }
 
+    pub async fn get_games_from_player(&mut self, player: &str) -> Result<(), reqwest::Error> {
+        let a = self.request(format!("https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{player}")).await.expect("");
+        let player_json: Value = serde_json::from_str(a.as_str()).unwrap();
+        let puuid = player_json["puuid"].clone().to_string();
+        let a2 = self.request(format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids")).await.expect("");
+        println!("{a2}");
+        println!("{}", puuid.as_str());
+        Ok(())
+    }
+
     pub async fn get_games_from_players(&mut self, player_number: usize) -> Result<(), reqwest::Error> {
         let mut player_selection: Vec<String> = Vec::new();
         let mut rng = rand::thread_rng();
         for i in 0..player_number {
-            let item = self.player_list.remove(
-                rng.gen_range(
-                    0..self.player_list.len()
-                )
-            );
-            player_selection.push(item);
+            let rand_num: usize = rng.gen_range(0..self.player_list.len());
+            let p = self.player_list[0].clone();
+            player_selection.push(p);
         }
         self.player_list.clear();
         let uris: Vec<String> = player_selection.iter()
