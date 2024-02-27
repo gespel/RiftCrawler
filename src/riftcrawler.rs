@@ -1,10 +1,8 @@
 use std::fs;
-use std::fs::File;
-use std::io::Write;
 use tokio::time::{sleep, Duration};
 use reqwest::header::HeaderMap;
 use indicatif::{ProgressBar, ProgressStyle};
-use log::{debug, info, warn};
+use log::{debug, info};
 use reqwest::Client;
 use serde_json::Value;
 use rand::Rng;
@@ -27,7 +25,7 @@ impl RiftCrawler {
                 .template("[{wide_bar}] {percent}%").unwrap()
                 .progress_chars("=> "),
         );
-        for i in 0..120 {
+        for _i in 0..120 {
             sleep(Duration::from_secs(1)).await; // Simuliere eine Verzögerung
             progress.inc(1);
         }
@@ -103,10 +101,10 @@ impl RiftCrawler {
         Ok(())
     }
 
-    pub async fn get_games_from_player(&mut self, player: &str) -> Result<(), reqwest::Error> {
+    pub async fn get_games_from_player(&mut self, player: String) -> Result<(), reqwest::Error> {
         let a = self.request(format!("https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{player}").to_string()).await.expect("");
         let player_json: Value = serde_json::from_str(a.as_str()).unwrap();
-        let mut puuid: String = player_json["puuid"].as_str().unwrap().to_string();
+        let puuid: String = player_json["puuid"].as_str().unwrap().to_string();
         let a2 = self.request(format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids").to_string()).await.expect("");
         let games_json: Vec<String> = serde_json::from_str(&*a2).unwrap();
 
@@ -120,7 +118,7 @@ impl RiftCrawler {
     pub async fn get_games_from_players(&mut self, player_number: usize) -> Result<(), reqwest::Error> {
         let mut player_selection: Vec<String> = Vec::new();
         let mut rng = rand::thread_rng();
-        for i in 0..player_number {
+        for _i in 0..player_number {
             let rand_num: usize = rng.gen_range(0..self.player_list.len());
             let p = self.player_list[rand_num].clone();
             player_selection.push(p);

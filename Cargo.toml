@@ -1,5 +1,5 @@
 [package]
-name = "lsgc"
+name = "riftcrawler"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,3 +13,4 @@ env_logger = "0.10.0"
 log = "0.4.20"
 indicatif = "0.17.7"
 rand = "0.8.5"
+clap = { version = "4.5.1", features = ["derive"] }
