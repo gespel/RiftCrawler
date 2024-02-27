@@ -11,9 +11,15 @@ mod tools;
 
 
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
 struct Cli {
+    ///API key can be retrieved from Riots Developer Portal
+    #[arg(short, long)]
     api_key: String,
+
+    ///The first account to start the crawl on
+    #[arg(short, long)]
     start_account: String,
 }
 
