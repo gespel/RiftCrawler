@@ -16,7 +16,7 @@ pub struct RiftCrawler {
     client: reqwest::Client,
     header: HeaderMap,
     pub games_list: Vec<std::string::String>,
-    player_list: Vec<std::string::String>
+    pub player_list: Vec<std::string::String>
 }
 
 impl RiftCrawler {
@@ -74,6 +74,7 @@ impl RiftCrawler {
 
         if response.status().is_success() {
             //println!("{} Request was successful", self.pulls_last_two_minutes);
+            //println!("{}", response.text().clone());
         } else {
             println!("Request failed with status code: {}", response.status());
             if response.status() == 429 {
@@ -103,12 +104,16 @@ impl RiftCrawler {
     }
 
     pub async fn get_games_from_player(&mut self, player: &str) -> Result<(), reqwest::Error> {
-        let a = self.request(format!("https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{player}")).await.expect("");
+        let a = self.request(format!("https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{player}").to_string()).await.expect("");
         let player_json: Value = serde_json::from_str(a.as_str()).unwrap();
-        let puuid = player_json["puuid"].clone().to_string();
-        let a2 = self.request(format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids")).await.expect("");
-        println!("{a2}");
-        println!("{}", puuid.as_str());
+        let mut puuid: String = player_json["puuid"].as_str().unwrap().to_string();
+        let a2 = self.request(format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids").to_string()).await.expect("");
+        let games_json: Vec<String> = serde_json::from_str(&*a2).unwrap();
+
+        for game in games_json {
+            self.games_list.push(game);
+        }
+
         Ok(())
     }
 
@@ -117,7 +122,7 @@ impl RiftCrawler {
         let mut rng = rand::thread_rng();
         for i in 0..player_number {
             let rand_num: usize = rng.gen_range(0..self.player_list.len());
-            let p = self.player_list[0].clone();
+            let p = self.player_list[rand_num].clone();
             player_selection.push(p);
         }
         self.player_list.clear();
@@ -135,7 +140,7 @@ impl RiftCrawler {
             let parsed: Value = serde_json::from_str(&*answer_json).unwrap();
             if let Some(games) = parsed.as_array() {
                 for game in games {
-                    self.games_list.push(game.to_string());
+                    self.games_list.push(game.as_str().unwrap().to_string());
                 }
 
             }
@@ -145,8 +150,7 @@ impl RiftCrawler {
     }
 
     pub async fn write_games_to_disk_and_extract_new_players(&mut self) -> Result<(), reqwest::Error> {
-        let games_list_temp: Vec<String> = self.games_list.clone();
-        for game in games_list_temp {
+        for game in self.games_list.clone() {
             if fs::metadata(game.to_string().trim_matches('\"').to_owned() + ".json").is_err() {
                 let uri = format!("https://europe.api.riotgames.com/lol/match/v5/matches/{}", game.to_string().trim_matches('\"'));
                 debug!("Requesting {}", uri);
@@ -160,7 +164,7 @@ impl RiftCrawler {
                 if let Some(players) = parsed["metadata"]["participants"].as_array() {
                     for player in players {
                         debug!("New Player added! {}", player);
-                        self.player_list.push(player.clone().to_string());
+                        self.player_list.push(player.as_str().unwrap().to_string());
                         add_counter += 1;
                     }
                 }
