@@ -19,17 +19,17 @@ pub struct RiftCrawler {
 
 impl RiftCrawler {
     async fn sleep_with_status(&self) {
-        let progress = ProgressBar::new(120);
+        /*let progress = ProgressBar::new(120);
         progress.set_style(
             ProgressStyle::default_bar()
                 .template("[{wide_bar}] {percent}%").unwrap()
                 .progress_chars("=> "),
-        );
+        );*/
         for _i in 0..120 {
             sleep(Duration::from_secs(1)).await; // Simuliere eine Verzögerung
-            progress.inc(1);
+            //progress.inc(1);
         }
-        progress.finish();
+        //progress.finish();
     }
     pub fn new(api_key: String) -> RiftCrawler {
         let mut hm = HeaderMap::new();
@@ -121,28 +121,32 @@ impl RiftCrawler {
         for _i in 0..player_number {
             let rand_num: usize = rng.gen_range(0..self.player_list.len());
             let p = self.player_list[rand_num].clone();
-            player_selection.push(p);
+            player_selection.push(p.clone());
+            debug!("{} selected!", p);
         }
+        player_selection.dedup();
         self.player_list.clear();
         let uris: Vec<String> = player_selection.iter()
             .map(|player| {
                 let name = player.trim_matches('\"');
-                format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?start=1&count=1", name)
+                format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?start=1&count=3", name)
             })
             .collect();
 
-        for uri in uris {
-            let answer_json = self.request(uri.parse().unwrap())
-                .await
-                .expect("error while requesting");
-            let parsed: Value = serde_json::from_str(&*answer_json).unwrap();
-            if let Some(games) = parsed.as_array() {
-                for game in games {
-                    self.games_list.push(game.as_str().unwrap().to_string());
-                }
+        let rand_game_num = rng.gen_range(0..2);
+        let uri = uris[rand_game_num].clone();
 
+        let answer_json = self.request(uri.parse().unwrap())
+            .await
+            .expect("error while requesting");
+        let parsed: Value = serde_json::from_str(&*answer_json).unwrap();
+        if let Some(games) = parsed.as_array() {
+            for game in games {
+                self.games_list.push(game.as_str().unwrap().to_string());
             }
+
         }
+        
 
         Ok(())
     }

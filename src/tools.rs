@@ -30,8 +30,8 @@ pub(crate) fn write_game_json_to_disk(parsed: Value, gt: GameType) {
         }
     }
     let file_path: String = file_prefix.as_str().to_owned() + parsed["metadata"]["matchId"].to_string().trim_matches('\"').to_owned().as_str() + ".json";
-    let mut file = File::create(file_path).expect("Error while file write!");
+    let mut file = File::create(file_path.clone()).expect("Error while file write!");
     let f_json = serde_json::to_string_pretty(&parsed).expect("Error while formatting JSON");
     file.write_all(f_json.as_bytes()).expect("Error while writing json to file!");
-    info!("{} Game written!", parsed["metadata"]["matchId"]);
+    info!("{} Game written to {}!", parsed["metadata"]["matchId"], file_path);
 }
