@@ -39,7 +39,8 @@ async fn main() -> Result<(), Error> {
     let mut l = RiftCrawler::new(args.api_key.parse().unwrap());
     info!("Starting initial Playerfetch");
     l.get_games_from_player(args.start_account.to_string()).await.expect("TODO: panic message");
-    l.write_games_to_disk_and_extract_new_players().await.expect("");
+    info!("{:?}", l.games_list);
+    /*l.write_games_to_disk_and_extract_new_players().await.expect("");
     loop {
         info!("New Epoch!");
 
@@ -49,6 +50,7 @@ async fn main() -> Result<(), Error> {
         info!("Writing to disk and extracting new players..");
         l.write_games_to_disk_and_extract_new_players().await.expect("TODO: panic message");
 
-    }
+    }*/
+    Ok(())
 }
 
