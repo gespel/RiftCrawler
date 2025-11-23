@@ -19,17 +19,17 @@ pub struct RiftCrawler {
 
 impl RiftCrawler {
     async fn sleep_with_status(&self) {
-        /*let progress = ProgressBar::new(120);
+        let progress = ProgressBar::new(120);
         progress.set_style(
             ProgressStyle::default_bar()
                 .template("[{wide_bar}] {percent}%").unwrap()
                 .progress_chars("=> "),
-        );*/
+        );
         for _i in 0..120 {
             sleep(Duration::from_secs(1)).await; // Simuliere eine Verzögerung
-            //progress.inc(1);
+            progress.inc(1);
         }
-        //progress.finish();
+        progress.finish();
     }
     pub fn new(api_key: String) -> RiftCrawler {
         let mut hm = HeaderMap::new();
@@ -98,28 +98,8 @@ impl RiftCrawler {
         Ok(response.text().await?)
     }
 
-    pub async fn get_featured_games_players(&mut self) -> Result<(), reqwest::Error> {
-        let a = self.request("https://euw1.api.riotgames.com/lol/spectator/v4/featured-games".to_string())
-            .await
-            .expect("error while requesting");
-        let parsed: Value = serde_json::from_str(&*a).unwrap();
-        println!("{}", a);
-        if let Some(games) = parsed["gameList"].as_array() {
-            for game in games {
-                if let Some(players) = game["participants"].as_array() {
-                    for player in players {
-                        self.player_list.push(player["puuid"].to_string().trim_matches('\"').parse().unwrap());
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-
-    pub async fn get_games_from_player(&mut self, player: String) -> Result<(), reqwest::Error> {
-        let a = self.request(format!("https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{player}").to_string()).await.expect("");
-        let player_json: Value = serde_json::from_str(a.as_str()).unwrap();
-        let puuid: String = player_json["puuid"].as_str().unwrap().to_string();
+    pub async fn get_games_from_player(&mut self, player_name: &str, tag_line: &str) -> Result<(), reqwest::Error> {
+        let puuid = self.get_player_puuid(player_name, tag_line).await;
         let a2 = self.request(format!("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids").to_string()).await.expect("");
         let games_json: Vec<String> = serde_json::from_str(&*a2).unwrap();
 
@@ -137,7 +117,7 @@ impl RiftCrawler {
             let rand_num: usize = rng.gen_range(0..self.player_list.len());
             let p = self.player_list[rand_num].clone();
             player_selection.push(p.clone());
-            debug!("{} selected!", p);
+            //debug!("{} selected!", p);
         }
         player_selection.dedup();
         self.player_list.clear();
@@ -170,7 +150,7 @@ impl RiftCrawler {
         for game in self.games_list.clone() {
             if fs::metadata(game.to_string().trim_matches('\"').to_owned() + ".json").is_err() {
                 let uri = format!("https://europe.api.riotgames.com/lol/match/v5/matches/{}", game.to_string().trim_matches('\"'));
-                debug!("Requesting {}", uri);
+                //debug!("Requesting {}", uri);
                 let a = self.request(uri.parse().unwrap())
                     .await
                     .expect("Error");
@@ -180,17 +160,18 @@ impl RiftCrawler {
 
                 if let Some(players) = parsed["metadata"]["participants"].as_array() {
                     for player in players {
-                        debug!("New Player added! {}", player);
+                        //debug!("New Player added! {}", player);
                         self.player_list.push(player.as_str().unwrap().to_string());
                         add_counter += 1;
                     }
                 }
-                info!("Added {} new players...", add_counter);
+                //info!("Added {} new players...", add_counter);
                 if parsed["info"]["gameMode"] == "CLASSIC" {
                     tools::write_game_json_to_disk(parsed, tools::GameType::CLASSIC);
                 }
                 else if parsed["info"]["gameMode"] == "ARAM" {
-                    tools::write_game_json_to_disk(parsed, tools::GameType::ARAM);
+                    //tools::write_game_json_to_disk(parsed, tools::GameType::ARAM);
+                    debug!("Game is ARAM...")
                 }
                 else {
                     debug!("Game is not classic...")
