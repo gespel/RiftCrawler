@@ -49,6 +49,21 @@ impl RiftCrawler {
         };
         return out;
     }
+
+    pub async fn get_player_puuid(&mut self, name: &str, tagline: &str) -> String {
+        let response = self.request(format!("https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{}/{}", name, tagline)).await.unwrap();
+        let parsed: Value = serde_json::from_str(&*response).unwrap();
+        let out: String = parsed["puuid"].to_string();
+        out
+    }
+
+    pub async fn get_player_level(&mut self, puuid: &str) -> String {
+        let response = self.request(format!("https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{}", puuid)).await.unwrap();
+        let parsed: Value = serde_json::from_str(&*response).unwrap();
+        let out: String = parsed["summonerLevel"].to_string();
+        out
+    }
+
     pub async fn request(&mut self, uri: String) -> Result<String, reqwest::Error> {
         self.pulls_this_second += 1;
         self.pulls_last_two_minutes += 1;

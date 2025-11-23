@@ -36,21 +36,14 @@ async fn main() -> Result<(), Error> {
     tools::setup_folder("games/aram".to_string());
     info!("File structure done!");
 
-    let mut l = RiftCrawler::new(args.api_key.parse().unwrap());
-    info!("Starting initial Playerfetch");
-    l.get_games_from_player(args.start_account.to_string()).await.expect("TODO: panic message");
-    info!("{:?}", l.games_list);
-    /*l.write_games_to_disk_and_extract_new_players().await.expect("");
-    loop {
-        info!("New Epoch!");
+    let mut rc = RiftCrawler::new(args.api_key.parse().unwrap());
+    let name = "TFO Gespel";
+    let tag_line = "EUW";
+    let puuid = rc.get_player_puuid(name, tag_line).await;
+    info!("Player puuid: {}", puuid);
+    let level = rc.get_player_level(puuid.as_str()).await;
+    info!("{} #{} is level {}", name, tag_line, level);
 
-        info!("Fetching games from players...");
-        l.get_games_from_players(5).await.expect("TODO: panic message");
-
-        info!("Writing to disk and extracting new players..");
-        l.write_games_to_disk_and_extract_new_players().await.expect("TODO: panic message");
-
-    }*/
     Ok(())
 }
 
