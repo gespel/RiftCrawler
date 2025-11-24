@@ -2,7 +2,7 @@ use std::fs;
 use tokio::time::{sleep, Duration};
 use reqwest::header::HeaderMap;
 use indicatif::{ProgressBar, ProgressStyle};
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use reqwest::Client;
 use serde_json::Value;
 use rand::Rng;
@@ -89,7 +89,7 @@ impl RiftCrawler {
             //println!("{} Request was successful", self.pulls_last_two_minutes);
             //println!("{}", response.text().clone());
         } else {
-            println!("Request failed with status code: {}", response.status());
+            warn!("Request failed with status code: {}", response.status());
             if response.status() == 429 {
                 self.sleep_with_status().await;
             }
@@ -120,7 +120,6 @@ impl RiftCrawler {
             //debug!("{} selected!", p);
         }
         player_selection.dedup();
-        self.player_list.clear();
         let uris: Vec<String> = player_selection.iter()
             .map(|player| {
                 let name = player.trim_matches('\"');
@@ -144,10 +143,11 @@ impl RiftCrawler {
                             self.games_list.push(s.to_string());
                         }
                     }
+                    self.player_list.clear();
                 }
             }
             Err(_) => {
-                error!("Error while parsing json");
+                warn!("Error while parsing json in get_games_from_players.");
             }
         }
 
@@ -189,7 +189,7 @@ impl RiftCrawler {
                         }
                     }
                     Err(_) => {
-                        error!("Error while parsing json");
+                        warn!("Error while parsing json while writing games to disk!");
                     }
                 }
             } else {
