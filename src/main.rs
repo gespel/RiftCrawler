@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 use serde_json::{Error};
-use log::{info};
+use log::{error, info};
 use std::env;
 use clap::Parser;
 use crate::riftcrawler::RiftCrawler;
@@ -43,11 +43,23 @@ async fn main() -> Result<(), Error> {
     info!("Player puuid: {}", puuid);
     let level = rc.get_player_level(puuid.as_str()).await;
     info!("{} #{} is level {}", name, tag_line, level);*/
-    rc.get_games_from_player(name, tag_line).await.unwrap();
-    rc.write_games_to_disk_and_extract_new_players().await.unwrap();
+    match rc.get_games_from_player(name, tag_line).await {
+        Ok(_) => {}
+        Err(_) => {error!("Failed to get games for player {}!", name);}
+    }
+    match rc.write_games_to_disk_and_extract_new_players().await {
+        Ok(_) => {}
+        Err(_) => {error!("Failed to write games to disk!");}
+    }
     loop {
-        rc.get_games_from_players(5).await.unwrap();
-        rc.write_games_to_disk_and_extract_new_players().await.unwrap();
+        match rc.get_games_from_players(5).await {
+            Ok(_) => {}
+            Err(_) => {error!("Failed to get games from players!");}
+        }
+        match rc.write_games_to_disk_and_extract_new_players().await {
+            Ok(_) => {}
+            Err(_) => {error!("Failed to write games to disk!");}
+        }
     }
 
     Ok(())

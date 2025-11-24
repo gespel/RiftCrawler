@@ -2,7 +2,7 @@ use std::fs;
 use tokio::time::{sleep, Duration};
 use reqwest::header::HeaderMap;
 use indicatif::{ProgressBar, ProgressStyle};
-use log::{debug, info};
+use log::{debug, error, info};
 use reqwest::Client;
 use serde_json::Value;
 use rand::Rng;
@@ -134,13 +134,23 @@ impl RiftCrawler {
         let answer_json = self.request(uri.parse().unwrap())
             .await
             .expect("error while requesting");
-        let parsed: Value = serde_json::from_str(&*answer_json).unwrap();
-        if let Some(games) = parsed.as_array() {
-            for game in games {
-                self.games_list.push(game.as_str().unwrap().to_string());
-            }
+        let parsed: Result<Value, serde_json::Error> = serde_json::from_str(&answer_json);
 
+        match parsed {
+            Ok(value) => {
+                if let Some(games) = value.as_array() {
+                    for game in games {
+                        if let Some(s) = game.as_str() {
+                            self.games_list.push(s.to_string());
+                        }
+                    }
+                }
+            }
+            Err(_) => {
+                error!("Error while parsing json");
+            }
         }
+
         
 
         Ok(())
@@ -154,27 +164,33 @@ impl RiftCrawler {
                 let a = self.request(uri.parse().unwrap())
                     .await
                     .expect("Error");
-                let parsed: Value = serde_json::from_str(&*a).unwrap();
+                let parsed: Result<Value, serde_json::Error> = serde_json::from_str(&*a);
+                match parsed {
+                    Ok(value) => {
+                        let mut add_counter: usize = 0;
 
-                let mut add_counter: usize = 0;
-
-                if let Some(players) = parsed["metadata"]["participants"].as_array() {
-                    for player in players {
-                        //debug!("New Player added! {}", player);
-                        self.player_list.push(player.as_str().unwrap().to_string());
-                        add_counter += 1;
+                        if let Some(players) = value["metadata"]["participants"].as_array() {
+                            for player in players {
+                                //debug!("New Player added! {}", player);
+                                self.player_list.push(player.as_str().unwrap().to_string());
+                                add_counter += 1;
+                            }
+                        }
+                        //info!("Added {} new players...", add_counter);
+                        if value["info"]["gameMode"] == "CLASSIC" {
+                            tools::write_game_json_to_disk(value, tools::GameType::CLASSIC);
+                        }
+                        else if value["info"]["gameMode"] == "ARAM" {
+                            //tools::write_game_json_to_disk(parsed, tools::GameType::ARAM);
+                            debug!("Game is ARAM...")
+                        }
+                        else {
+                            debug!("Game is not classic...")
+                        }
                     }
-                }
-                //info!("Added {} new players...", add_counter);
-                if parsed["info"]["gameMode"] == "CLASSIC" {
-                    tools::write_game_json_to_disk(parsed, tools::GameType::CLASSIC);
-                }
-                else if parsed["info"]["gameMode"] == "ARAM" {
-                    //tools::write_game_json_to_disk(parsed, tools::GameType::ARAM);
-                    debug!("Game is ARAM...")
-                }
-                else {
-                    debug!("Game is not classic...")
+                    Err(_) => {
+                        error!("Error while parsing json");
+                    }
                 }
             } else {
                 debug!("Game already exists!");
