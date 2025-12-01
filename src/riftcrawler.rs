@@ -114,6 +114,10 @@ impl RiftCrawler {
         let mut player_selection: Vec<String> = Vec::new();
         let mut rng = rand::thread_rng();
         for _i in 0..player_number {
+            if self.player_list.len() == 0 {
+                error!("No players in player list to select from!");
+                break;
+            }
             let rand_num: usize = rng.gen_range(0..self.player_list.len());
             let p = self.player_list[rand_num].clone();
             player_selection.push(p.clone());
