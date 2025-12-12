@@ -246,3 +246,16 @@ def get_all_participants(games: list) -> list:
     print(f"{len(puuids)} total number of players.")
     return puuids
 
+def get_winratio_for_nr_kills(games: list, kills: int) -> float:
+    wins = 0
+    losses = 0
+    for game in tqdm(games):
+        for participant in game.get("info").get("participants", []):
+            if participant.get("kills") == kills:
+                if participant.get("win") == True:
+                    wins += 1
+                if participant.get("win") == False:
+                    losses += 1
+    return wins / (wins + losses)
+            
+
