@@ -279,4 +279,10 @@ def get_winratio_for_nr_kills_and_role(games: list, kills: int, team_position: s
                     losses += 1
     return wins / (wins + losses)
             
-
+def get_all_gametypes(games: list):
+    gametypes = []
+    for game in tqdm(games): 
+        game_type = game.get("info").get("gameType")
+        if game_type not in gametypes:
+            gametypes.append(game_type)
+    return gametypes
