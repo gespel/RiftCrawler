@@ -116,7 +116,8 @@ impl RiftCrawler {
         for _i in 0..player_number {
             if self.player_list.len() == 0 {
                 error!("No players in player list to select from!");
-                break;
+                self.get_games_from_player("TFO Gespel", "EUW").await?;
+                self.write_games_to_disk_and_extract_new_players().await?;
             }
             let rand_num: usize = rng.gen_range(0..self.player_list.len());
             let p = self.player_list[rand_num].clone();
