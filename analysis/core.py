@@ -101,11 +101,13 @@ def higher_absolute_level_winrate(games:list, difference: float = 0.0) -> float:
         team1_win = False
         team2_win = False
 
-        for participant in game.get("info").get("participants", []):
-            if participant["teamId"] == 100 and participant["win"]:
-                team1_win = True
-            elif participant["teamId"] == 200 and participant["win"]:
-                team2_win = True
+        p = game.get("info").get("participants", [])[0]
+        if p["teamId"] == 100:
+            team1_win = p["win"]
+            team2_win = not team1_win
+        elif p["teamId"] == 200:
+            team2_win = p["win"]
+            team1_win = not team2_win
 
         if team1_max_level > team2_max_level and abs(team1_max_level - team2_max_level) > difference:
             all_games += 1
@@ -130,14 +132,15 @@ def higher_level_winrate(games: list, difference: float = 0.0) -> float:
         team1_level, team2_level = get_team_levels(game)
         team1_win = False
         team2_win = False
-        for participant in game.get("info").get("participants", []):
-            if participant["teamId"] == 100 and participant["win"]:
-                team1_win = True
-            elif participant["teamId"] == 200 and participant["win"]:
-                team2_win = True
-        if team1_win == team2_win:
-            print("Error! It is impossible that both teams win")
-            exit(-1)
+
+        p = game.get("info").get("participants", [])[0]
+        if p["teamId"] == 100:
+            team1_win = p["win"]
+            team2_win = not team1_win
+        elif p["teamId"] == 200:
+            team2_win = p["win"]
+            team1_win = not team2_win
+
         if team1_level > team2_level and (abs(team1_level - team2_level) > difference):
             all_games += 1
             if team1_win:
@@ -165,14 +168,17 @@ def higher_champion_level_winrate(games: list, difference: float = 0.0) -> float
         team1_level, team2_level = get_team_champion_levels(game)
         team1_win = False
         team2_win = False
-        for participant in game.get("info").get("participants", []):
-            if participant["teamId"] == 100 and participant["win"]:
-                team1_win = True
-            elif participant["teamId"] == 200 and participant["win"]:
-                team2_win = True
-        if team1_win == team2_win:
+
+        p = game.get("info").get("participants", [])[0]
+        if p["teamId"] == 100:
+            team1_win = p["win"]
+            team2_win = not team1_win
+        elif p["teamId"] == 200:
+            team2_win = p["win"]
+            team1_win = not team2_win
+        if team1_win == team2_win == True:
             print("Error! It is impossible that both teams win")
-            exit(-1)
+            #exit(-1)
         if team1_level > team2_level and (abs(team1_level - team2_level) > difference):
             all_games += 1
             if team1_win:
@@ -200,14 +206,17 @@ def lower_level_winrate(games: list, difference: float = 0.0) -> float:
         team1_level, team2_level = get_team_levels(game)
         team1_win = False
         team2_win = False
-        for participant in game.get("info").get("participants", []):
-            if participant["teamId"] == 100 and participant["win"]:
-                team1_win = True
-            elif participant["teamId"] == 200 and participant["win"]:
-                team2_win = True
-        if team1_win == team2_win:
+
+        p = game.get("info").get("participants", [])[0]
+        if p["teamId"] == 100:
+            team1_win = p["win"]
+            team2_win = not team1_win
+        elif p["teamId"] == 200:
+            team2_win = p["win"]
+            team1_win = not team2_win
+        if team1_win == team2_win == True:
             print("Error! It is impossible that both teams win")
-            exit(-1)
+            #exit(-1)
         if team1_level > team2_level and (abs(team1_level - team2_level) > difference):
             all_games += 1
             if team1_win:
