@@ -267,12 +267,12 @@ def get_winratio_for_nr_kills(games: list, kills: int) -> float:
                     losses += 1
     return wins / (wins + losses)
 
-def get_winratio_for_nr_kills_and_role(games: list, kills: int, team_position: str) -> float:
+def get_winratio_for_nr_kills_and_role(games: list, kills: int, role: str, lane: str) -> float:
     wins = 0
     losses = 0
     for game in tqdm(games):
         for participant in game.get("info").get("participants", []):
-            if (participant.get("kills") == kills) and (participant.get("role") == team_position):
+            if (participant.get("kills") == kills) and (participant.get("role") == role) and (participant.get("lane") == lane):
                 if participant.get("win") == True:
                     wins += 1
                 if participant.get("win") == False:
