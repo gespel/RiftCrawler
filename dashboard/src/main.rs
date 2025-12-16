@@ -14,13 +14,7 @@ async fn index() -> RawHtml<String> {
     let html = fs::read_to_string(relative!("static/index.html"))
         .unwrap_or_else(|_| String::from("<h1>Error loading index.html</h1>"));
     
-    // Test-Kontext einfügen (könnte später durch ein Template-System ersetzt werden)
-    let context_html = html.replace(
-        "Dies ist ein einfaches Tailwind CSS Beispiel mit schönen Styling-Komponenten.",
-        "Dashboard läuft! Server-Zeit: 16. Dezember 2025 | Status: ✅ Aktiv | Crawler: 🔍 Bereit"
-    );
-    
-    RawHtml(context_html)
+    RawHtml(html)
 }
 
 #[get("/<id>")]
