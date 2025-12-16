@@ -1,3 +1,4 @@
 *target
 *games
 .venv
+*nohup.out
