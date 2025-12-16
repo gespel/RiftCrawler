@@ -172,13 +172,10 @@ impl RiftCrawler {
                 let parsed: Result<Value, serde_json::Error> = serde_json::from_str(&*a);
                 match parsed {
                     Ok(value) => {
-                        let mut add_counter: usize = 0;
-
                         if let Some(players) = value["metadata"]["participants"].as_array() {
                             for player in players {
                                 //debug!("New Player added! {}", player);
                                 self.player_list.push(player.as_str().unwrap().to_string());
-                                add_counter += 1;
                             }
                         }
                         //info!("Added {} new players...", add_counter);
