@@ -4,11 +4,8 @@ use rocket::response::content::RawHtml;
 use rocket::serde::{Serialize, json::Json};
 use std::fs;
 
-#[derive(Serialize)]
-#[serde(crate = "rocket::serde")]
-struct Game {
-    id: String
-}
+mod game;
+use crate::game::Game;
 
 
 #[get("/")]
