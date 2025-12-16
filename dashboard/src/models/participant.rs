@@ -64,7 +64,19 @@ pub struct Participant {
     pub missions: Missions,
     pub need_vision_pings: u32,
     pub neutral_minions_killed: u32,
-    
+    pub nexus_kills: u32,
+    pub nexus_lost: u32,
+    pub nexus_takedowns: u32,
+    pub objectives_stolen: u32,
+    pub objectives_stolen_assists: u32,
+    pub on_my_way_pings: u32,
+    pub participant_id: u32,
+    pub penta_kills: u32,
+    pub perks: Perks,
+    pub physical_damage_dealt: u32,
+    pub physical_damage_dealt_to_champions: u32,
+    pub physical_damage_taken: u32,
+    pub placement: u32,
 }
 
 #[derive(Serialize)]
@@ -76,5 +88,11 @@ pub struct Challenges {
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct Missions {
+
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct Perks {
 
 }
