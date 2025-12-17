@@ -1,6 +1,6 @@
 use rocket::serde::{Serialize};
-use crate::models::participant::Participant;
-use crate::models::team::Team;
+use crate::analysis::models::participant::Participant;
+use crate::analysis::models::team::Team;
 
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]

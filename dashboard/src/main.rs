@@ -6,6 +6,8 @@ use std::fs;
 
 mod gameslist;
 use crate::gameslist::GamesList;
+mod analysis;
+use crate::analysis::highest_level::HighestLevel;
 
 #[get("/")]
 async fn index() -> RawHtml<String> {
