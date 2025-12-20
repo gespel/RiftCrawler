@@ -286,3 +286,15 @@ def get_all_gametypes(games: list):
         if game_type not in gametypes:
             gametypes.append(game_type)
     return gametypes
+
+def get_champion_winrates(games: list) -> dict:
+    out = {}
+    for game in games:
+        for participant in game.get("info").get("participants"):
+            if not participant["championName"] in out:
+                out[participant["championName"]] = (0, 0)
+            if participant["win"]:
+                out[participant["championName"]] = (out[participant["championName"]][0]+1, out[participant["championName"]][1])
+            else:
+                out[participant["championName"]] = (out[participant["championName"]][0], out[participant["championName"]][1]+1)
+    return out
