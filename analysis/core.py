@@ -265,7 +265,7 @@ def get_winratio_for_nr_kills(games: list, kills: int) -> float:
                     wins += 1
                 if participant.get("win") == False:
                     losses += 1
-    return wins / (wins + losses)
+    return wins / (wins + losses) if (wins + losses) > 0 else 0.0
 
 def get_winratio_for_nr_kills_and_role(games: list, kills: int, role: str, lane: str) -> float:
     wins = 0
@@ -277,8 +277,8 @@ def get_winratio_for_nr_kills_and_role(games: list, kills: int, role: str, lane:
                     wins += 1
                 if participant.get("win") == False:
                     losses += 1
-    return wins / (wins + losses)
-            
+    return wins / (wins + losses) if (wins + losses) > 0 else 0.0
+
 def get_all_gametypes(games: list):
     gametypes = []
     for game in tqdm(games): 
