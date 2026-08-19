@@ -29,11 +29,18 @@ async fn main() -> Result<(), Error> {
     env_logger::init();
 
     let mut api_key: String = String::new();
+    let mut start_account: String = String::new();
 
     if env::var("RIOT_API_KEY").is_ok() {
         api_key = env::var("RIOT_API_KEY").unwrap();
         info!("RIOT_API_KEY found in environment variables.");
         dbg!("API key: {}", &api_key);
+    }
+
+    if env::var("START_ACCOUNT").is_ok() {
+        start_account = env::var("START_ACCOUNT").unwrap();
+        info!("START_ACCOUNT found in environment variables.");
+        dbg!("Start account: {}", &start_account);
     }
 
     let args = Cli::parse();
@@ -42,6 +49,12 @@ async fn main() -> Result<(), Error> {
         api_key = key.clone();
         info!("RIOT_API_KEY found in command line arguments.");
         dbg!("API key: {}", &api_key);
+    }
+
+    if let Some(account) = &args.start_account {
+        start_account = account.clone();
+        info!("START_ACCOUNT found in command line arguments.");
+        dbg!("Start account: {}", &start_account);
     }
 
     if api_key.is_empty() {
@@ -58,7 +71,7 @@ async fn main() -> Result<(), Error> {
     let mut rc = RiftCrawler::new(api_key);
     let name: String;
     let tag_line: String;
-    if let Some(start_account) = &args.start_account {
+    if !start_account.is_empty() {
         let splitted = start_account.split(":").collect::<Vec<&str>>();
         if splitted.len() != 2 {
             error!("Invalid start account format. Please use the format 'name:tag_line'.");
