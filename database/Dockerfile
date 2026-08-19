@@ -1,0 +1,7 @@
+FROM postgres:16-alpine
+
+ENV POSTGRES_DB=lol
+ENV POSTGRES_USER=loluser
+ENV POSTGRES_PASSWORD=secret
+
+EXPOSE 5432

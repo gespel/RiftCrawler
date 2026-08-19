@@ -1,0 +1,10 @@
+services:
+  db:
+    build: ./database
+    ports:
+      - "30432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
