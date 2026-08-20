@@ -5,6 +5,13 @@ services:
       - "30432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+  crawler:
+    build: ./crawler
+    environment:
+      - RIOT_API_KEY=${RIOT_API_KEY}
+    volumes:
+      - ./crawler/games:/app/games
+
 
 volumes:
   db_data:
